@@ -1,8 +1,13 @@
 package de.MCmoderSD.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.theokanning.openai.completion.chat.ChatCompletionChunk;
+import de.MCmoderSD.UI.ChatPanel;
+import de.MCmoderSD.UI.Frame;
+import de.MCmoderSD.UI.MenuPanel;
 import de.MCmoderSD.utilities.json.JsonUtility;
 import de.MCmoderSD.utilities.other.OpenAi;
+import io.reactivex.Flowable;
 
 import java.util.Scanner;
 
@@ -13,25 +18,32 @@ public class ChatGPT {
     // Constants
     private final OpenAi openAI;
 
+    // Attributes
+    private final int maxTokensPerConversation;
+    private final String botName;
+    private final String instruction;
+    private final double temperature;
+    private final int maxTokens;
+    private final double topP;
+    private final double frequencyPenalty;
+    private final double presencePenalty;
+
+
     public ChatGPT() {
         JsonUtility jsonUtility = new JsonUtility();
         JsonNode config = jsonUtility.load("/ChatGPT.json");
 
-
-        // Custom Instructions
-        String instruction = "";
-
         // Create OpenAI instance
-        String botName = "YEPPBot";
+        botName = "YEPPBot";
         instruction = config.get("instruction").asText();
         String model = config.get("chatModel").asText();
         int maxConversationCalls = config.get("maxConversationCalls").asInt();
-        int maxTokensPerConversation = config.get("maxTokensPerConversation").asInt();
-        double temperature = config.get("temperature").asDouble();
-        int maxTokens = config.get("maxTokens").asInt();
-        double topP = config.get("topP").asDouble();
-        double frequencyPenalty = config.get("frequencyPenalty").asDouble();
-        double presencePenalty = config.get("presencePenalty").asDouble();
+        maxTokensPerConversation = config.get("maxTokensPerConversation").asInt();
+        temperature = config.get("temperature").asDouble();
+        maxTokens = config.get("maxTokens").asInt();
+        topP = config.get("topP").asDouble();
+        frequencyPenalty = config.get("frequencyPenalty").asDouble();
+        presencePenalty = config.get("presencePenalty").asDouble();
         openAI = new OpenAi(config);
 
         // Print Welcome Message
@@ -54,10 +66,10 @@ public class ChatGPT {
         System.out.println(UNBOLD);
 
         Scanner scanner = new Scanner(System.in);
-        conversationLoop(scanner, maxTokensPerConversation, botName, instruction, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+
     }
 
-    private void promptLoop(Scanner scanner, String botName, String instruction, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
+    private void promptLoop(Scanner scanner) {
         while (this.openAI.isActive()) {
 
             // Format
@@ -77,7 +89,7 @@ public class ChatGPT {
         }
     }
 
-    private void conversationLoop(Scanner scanner, int maxTokensPerConversation, String botName, String instruction, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
+    private void conversationLoop(Scanner scanner) {
 
         var id = 1;
 
@@ -101,5 +113,66 @@ public class ChatGPT {
             System.out.printf("%sTokens: %s%s", BOLD, openAI.getConversationTokens(id), BREAK);
             System.out.printf("Cost: %s%s%s%s", OpenAi.ChatModel.GPT_4O_MINI_2024_07_18.calculateCost(openAI.getConversationTokens(id)), UNBOLD, BREAK, BREAK);
         }
+    }
+
+    public void promptStream(Frame frame, String input) {
+
+        // Associations
+        ChatPanel chatPanel = frame.getChatPanel();
+        MenuPanel menuPanel = frame.getMenuPanel();
+
+        // Set Standby
+        menuPanel.setStandby(true);
+
+        // Format
+        chatPanel.append(BREAK + BREAK + "You: " + BREAK);
+        chatPanel.append(input + BREAK);
+
+        // Get response
+        Flowable<ChatCompletionChunk> response = openAI.promptStream(botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+
+        // Print response
+        chatPanel.append(BREAK + "ChatGPT: " + BREAK);
+        response.doOnError(Throwable::printStackTrace).forEach(chunk -> chatPanel.append(chunk.getChoices().getFirst().getMessage().getContent()));
+
+        // Set Standby
+        menuPanel.setStandby(false);
+    }
+
+    public void conversationStream(Frame frame, String input) {
+
+        // Associations
+        ChatPanel chatPanel = frame.getChatPanel();
+        MenuPanel menuPanel = frame.getMenuPanel();
+        var id = 1;
+
+        // Set Standby
+        menuPanel.setStandby(true);
+
+        // Format
+        chatPanel.append(BREAK + BREAK + "You: " + BREAK);
+        chatPanel.append(input + BREAK + BREAK);
+
+        // Get response
+        Flowable<ChatCompletionChunk> response = openAI.converseStream(id, maxTokensPerConversation, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+
+        // Print response
+        chatPanel.append(BREAK + "ChatGPT: " + BREAK);
+        StringBuilder message = new StringBuilder();
+        response.doOnError(Throwable::printStackTrace).forEach(chunk -> {
+            String content = chunk.getChoices().getFirst().getMessage().getContent();
+            if (content == null || content.isEmpty() || content.isBlank()) return;
+
+            content = formatOpenAiResponse(content, "YEPP");
+
+            message.append(content);
+            chatPanel.append(content);
+        });
+
+        // Save Message
+        openAI.addMessage(id, message.toString(), true);
+
+        // Set Standby
+        menuPanel.setStandby(false);
     }
 }

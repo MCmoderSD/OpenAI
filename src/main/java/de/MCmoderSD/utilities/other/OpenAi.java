@@ -1,11 +1,9 @@
 package de.MCmoderSD.utilities.other;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.theokanning.openai.completion.chat.ChatCompletionRequest;
-import com.theokanning.openai.completion.chat.ChatCompletionResult;
-import com.theokanning.openai.completion.chat.ChatMessage;
-import com.theokanning.openai.completion.chat.ChatMessageRole;
+import com.theokanning.openai.completion.chat.*;
 import com.theokanning.openai.service.OpenAiService;
+import io.reactivex.Flowable;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -103,6 +101,27 @@ public class OpenAi {
         return result.getChoices().getFirst().getMessage();
     }
 
+    public Flowable<ChatCompletionChunk> chatCompleationRequestStream(String user, ArrayList<ChatMessage> messages, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
+
+        // Request
+        ChatCompletionRequest request = ChatCompletionRequest
+                .builder()                              // Builder
+                .model(chatModel)                       // Model
+                .user(user)                             // User name
+                .messages(messages)                     // Chat history
+                .temperature(temperature)               // Temperature
+                .maxTokens(maxTokens)                   // Max tokens
+                .topP(topP)                             // Top P
+                .frequencyPenalty(frequencyPenalty)     // Frequency penalty
+                .presencePenalty(presencePenalty)       // Presence penalty
+                .n(1)                                // Amount of completions
+                .stream(true)                           // Stream
+                .build();                               // Build
+
+        // Response
+        return service.streamChatCompletion(request);
+    }
+
     private String startConversation(int id, String user, String instruction, String message, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
 
         // Add Instruction
@@ -117,6 +136,18 @@ public class OpenAi {
         return response.getContent();
     }
 
+    private Flowable<ChatCompletionChunk> startConversationStream(int id, String user, String instruction, String message, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
+
+        // Add Instruction
+        conversations.put(id, new ArrayList<>(Collections.singleton(new ChatMessage(ChatMessageRole.SYSTEM.value(), instruction))));
+
+        // Add message
+        addMessage(id, message, false);
+
+        // Return response
+        return chatCompleationRequestStream(user, conversations.get(id), temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+    }
+
     private String continueConversation(int id, String user, String message, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
 
         // Add message
@@ -128,6 +159,15 @@ public class OpenAi {
 
         // Return response
         return response.getContent();
+    }
+
+    private Flowable<ChatCompletionChunk> continueConversationStream(int id, String user, String message, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
+
+        // Add message
+        addMessage(id, message, false);
+
+        // Return response
+        return chatCompleationRequestStream(user, conversations.get(id), temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
     }
 
     private int calculateTotalTokens(ArrayList<ChatMessage> messages) {
@@ -160,6 +200,23 @@ public class OpenAi {
         return response.getContent();
     }
 
+    public Flowable<ChatCompletionChunk> promptStream(String user, String instruction, String prompt, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
+
+        // Approve parameters
+        if (disprove(user, instruction, prompt, temperature, maxTokens, topP, frequencyPenalty, presencePenalty))
+            throw new IllegalArgumentException("Invalid parameters");
+
+        // Clear messages
+        clearMessages();
+
+        // Add messages
+        addMessage(instruction, true);
+        addMessage(prompt, false);
+
+        // Get response
+        return chatCompleationRequestStream(user, messages, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+    }
+
     // Continue conversation
     public String converse(int id, int maxTokensPerConversation, String user, String instruction, String message, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
 
@@ -181,6 +238,28 @@ public class OpenAi {
             return continueConversation(id, user, message, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
         else conversations.remove(id);
         return "The conversation has reached the token limit";
+    }
+
+    public Flowable<ChatCompletionChunk> converseStream(int id, int maxTokensPerConversation, String user, String instruction, String message, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
+
+        // Approve parameters
+        if (disprove(user, instruction, message, temperature, maxTokens, topP, frequencyPenalty, presencePenalty))
+            throw new IllegalArgumentException("Invalid parameters");
+
+        // Variables
+        ArrayList<ChatMessage> conversation;
+
+        // Continue conversation
+        if (conversations.containsKey(id)) conversation = conversations.get(id);
+        else
+            return startConversationStream(id, user, instruction, message, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+
+        // Check total tokens
+        var totalTokens = calculateTotalTokens(conversation);
+        if (totalTokens + 2 * maxTokens <= maxTokensPerConversation)
+            return continueConversationStream(id, user, message, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+        else conversations.remove(id);
+        return null;
     }
 
     // Setter
