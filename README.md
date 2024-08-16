@@ -53,11 +53,11 @@ You can get the API key from [OpenAI](https://platform.openai.com/signup). <br>
 | gpt-4o-mini            | $0.150 / 1M input tokens <br/> \$0.600 / 1M output tokens |
 | gpt-4o-mini-2024-07-18 | $0.150 / 1M input tokens <br/> \$0.600 / 1M output tokens |
 
-- The **maxConversationCalls** is the limit for the conversation. <br>
+- The **maxConversationCalls** is the limit of calls per conversation. <br>
   After the limit is reached, the conversation will end. <br>
 
 
-- The **maxTokensPerConversation** is the limit for the conversation. <br>
+- The **maxTokenSpendingLimit** is the limit of tokens spent per conversatition. <br>
   After the limit is reached, the conversation will end. <br>
 
 
