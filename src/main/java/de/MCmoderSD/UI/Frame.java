@@ -45,6 +45,9 @@ public class Frame extends JFrame {
         chatPanel = new ChatPanel(this, size);
         menuPanel = new MenuPanel(this, size);
 
+        // Set ChatPanel
+        chatPanel.append("You: " + BREAK);
+
         // Set Visible
         pack();
         setLocation(centerJFrame(this));

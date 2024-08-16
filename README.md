@@ -29,6 +29,7 @@ The config.json file should look like this:
 {
   "apiKey": "YOUR_API_KEY",
   "chatModel": "gpt-4o-mini-2024-07-18",
+  "maxConversationCalls": 10,
   "maxTokensPerConversation": 16383,
   "temperature": 1,
   "maxTokens": 120,

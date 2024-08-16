@@ -1,13 +1,11 @@
 package de.MCmoderSD.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.theokanning.openai.completion.chat.ChatCompletionChunk;
 import de.MCmoderSD.UI.ChatPanel;
 import de.MCmoderSD.UI.Frame;
 import de.MCmoderSD.UI.MenuPanel;
 import de.MCmoderSD.utilities.json.JsonUtility;
 import de.MCmoderSD.utilities.other.OpenAi;
-import io.reactivex.Flowable;
 
 import java.util.Scanner;
 
@@ -19,6 +17,7 @@ public class ChatGPT {
     private final OpenAi openAI;
 
     // Attributes
+    private final int maxConversationCalls;
     private final int maxTokensPerConversation;
     private final String botName;
     private final String instruction;
@@ -37,7 +36,7 @@ public class ChatGPT {
         botName = "YEPPBot";
         instruction = config.get("instruction").asText();
         String model = config.get("chatModel").asText();
-        int maxConversationCalls = config.get("maxConversationCalls").asInt();
+        maxConversationCalls = config.get("maxConversationCalls").asInt();
         maxTokensPerConversation = config.get("maxTokensPerConversation").asInt();
         temperature = config.get("temperature").asDouble();
         maxTokens = config.get("maxTokens").asInt();
@@ -65,8 +64,8 @@ public class ChatGPT {
         System.out.println("Conversation Cost: " + OpenAi.ChatModel.GPT_4O_MINI_2024_07_18.calculateCost(maxTokens));
         System.out.println(UNBOLD);
 
-        Scanner scanner = new Scanner(System.in);
 
+        Scanner scanner = new Scanner(System.in);
     }
 
     private void promptLoop(Scanner scanner) {
@@ -77,7 +76,8 @@ public class ChatGPT {
 
             // Get user input
             String input = scanner.nextLine();
-            System.out.printf("%sChars: %s%s%s%s", BOLD, input.length(), UNBOLD, BREAK, BREAK);
+            System.out.printf("%sChars: %s%s", BOLD, input.length(), BREAK);
+            System.out.printf("Tokens: %s%s%s%s", OpenAi.calculateTokens(input), UNBOLD, BREAK, BREAK);
 
             // Get response
             System.out.printf("%sBot: %s%s", BOLD, UNBOLD, BREAK);
@@ -85,7 +85,8 @@ public class ChatGPT {
 
             // Print response
             System.out.println(formatOpenAiResponse(response, "YEPP"));
-            System.out.printf("%sChars: %s%s%s%s", BOLD, response.length(), UNBOLD, BREAK, BREAK);
+            System.out.printf("%sChars: %s%s", BOLD, response.length(), BREAK);
+            System.out.printf("Tokens: %s%s%s%s", OpenAi.calculateTokens(response), UNBOLD, BREAK, BREAK);
         }
     }
 
@@ -100,17 +101,18 @@ public class ChatGPT {
 
             // Get user input
             String input = scanner.nextLine();
-            System.out.printf("%sChars: %s%s%s%s", BOLD, input.length(), UNBOLD, BREAK, BREAK);
-
+            System.out.printf("%sChars: %s%s", BOLD, input.length(), BREAK);
+            System.out.printf("Tokens: %s%s%s%s", OpenAi.calculateTokens(input), UNBOLD, BREAK, BREAK);
 
             // Get response
             System.out.printf("%sBot: %s%s", BOLD, UNBOLD, BREAK);
-            String response = openAI.converse(id, maxTokensPerConversation, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+            String response = openAI.converse(id, maxTokensPerConversation, maxConversationCalls, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
 
             // Print response
             System.out.println(formatOpenAiResponse(response, "YEPP"));
             System.out.printf("%sChars: %s%s", BOLD, response.length(), BREAK);
-            System.out.printf("%sTokens: %s%s", BOLD, openAI.getConversationTokens(id), BREAK);
+            System.out.printf("Tokens: %s%s", OpenAi.calculateTokens(response), BREAK);
+            System.out.printf("Tokens Used: %s%s", openAI.getConversationTokens(id), BREAK);
             System.out.printf("Cost: %s%s%s%s", OpenAi.ChatModel.GPT_4O_MINI_2024_07_18.calculateCost(openAI.getConversationTokens(id)), UNBOLD, BREAK, BREAK);
         }
     }
@@ -128,12 +130,9 @@ public class ChatGPT {
         chatPanel.append(BREAK + BREAK + "You: " + BREAK);
         chatPanel.append(input + BREAK);
 
-        // Get response
-        Flowable<ChatCompletionChunk> response = openAI.promptStream(botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
-
         // Print response
         chatPanel.append(BREAK + "ChatGPT: " + BREAK);
-        response.doOnError(Throwable::printStackTrace).forEach(chunk -> chatPanel.append(chunk.getChoices().getFirst().getMessage().getContent()));
+        openAI.promptStream(botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty).forEach(chunk -> chatPanel.append(OpenAi.getContent(chunk)));
 
         // Set Standby
         menuPanel.setStandby(false);
@@ -141,36 +140,23 @@ public class ChatGPT {
 
     public void conversationStream(Frame frame, String input) {
 
+        // Variables
+        var id = 1;
+
         // Associations
         ChatPanel chatPanel = frame.getChatPanel();
         MenuPanel menuPanel = frame.getMenuPanel();
-        var id = 1;
 
         // Set Standby
         menuPanel.setStandby(true);
 
         // Format
         chatPanel.append(BREAK + BREAK + "You: " + BREAK);
-        chatPanel.append(input + BREAK + BREAK);
-
-        // Get response
-        Flowable<ChatCompletionChunk> response = openAI.converseStream(id, maxTokensPerConversation, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+        chatPanel.append(input + BREAK);
 
         // Print response
         chatPanel.append(BREAK + "ChatGPT: " + BREAK);
-        StringBuilder message = new StringBuilder();
-        response.doOnError(Throwable::printStackTrace).forEach(chunk -> {
-            String content = chunk.getChoices().getFirst().getMessage().getContent();
-            if (content == null || content.isEmpty() || content.isBlank()) return;
-
-            content = formatOpenAiResponse(content, "YEPP");
-
-            message.append(content);
-            chatPanel.append(content);
-        });
-
-        // Save Message
-        openAI.addMessage(id, message.toString(), true);
+        openAI.converseStream(id, maxTokensPerConversation, maxConversationCalls, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty).forEach(chunk -> chatPanel.append(OpenAi.getContent(chunk)));
 
         // Set Standby
         menuPanel.setStandby(false);
