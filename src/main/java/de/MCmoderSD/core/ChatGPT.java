@@ -18,7 +18,7 @@ public class ChatGPT {
 
     // Attributes
     private final int maxConversationCalls;
-    private final int maxTokensPerConversation;
+    private final int maxTokenSpendingLimit;
     private final String botName;
     private final String instruction;
     private final double temperature;
@@ -37,7 +37,7 @@ public class ChatGPT {
         instruction = config.get("instruction").asText();
         String model = config.get("chatModel").asText();
         maxConversationCalls = config.get("maxConversationCalls").asInt();
-        maxTokensPerConversation = config.get("maxTokensPerConversation").asInt();
+        maxTokenSpendingLimit = config.get("maxTokenSpendingLimit").asInt();
         temperature = config.get("temperature").asDouble();
         maxTokens = config.get("maxTokens").asInt();
         topP = config.get("topP").asDouble();
@@ -52,7 +52,7 @@ public class ChatGPT {
         System.out.println("Instruction: " + instruction);
         System.out.println("Model: " + model);
         System.out.println("Max Conversation Calls: " + maxConversationCalls);
-        System.out.println("Max Tokens Per Conversation: " + maxTokensPerConversation);
+        System.out.println("Max Token Spending Limit: " + maxTokenSpendingLimit);
         System.out.println("Temperature: " + temperature);
         System.out.println("Max Tokens: " + maxTokens);
         System.out.println("Top P: " + topP);
@@ -106,7 +106,7 @@ public class ChatGPT {
 
             // Get response
             System.out.printf("%sBot: %s%s", BOLD, UNBOLD, BREAK);
-            String response = openAI.converse(id, maxTokensPerConversation, maxConversationCalls, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+            String response = openAI.converse(id, maxConversationCalls, maxTokenSpendingLimit, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
 
             // Print response
             System.out.println(formatOpenAiResponse(response, "YEPP"));
@@ -156,7 +156,7 @@ public class ChatGPT {
 
         // Print response
         chatPanel.append(BREAK + "ChatGPT: " + BREAK);
-        openAI.converseStream(id, maxTokensPerConversation, maxConversationCalls, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty).forEach(chunk -> chatPanel.append(OpenAi.getContent(chunk)));
+        openAI.converseStream(id, maxConversationCalls, maxTokenSpendingLimit, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty).forEach(chunk -> chatPanel.append(OpenAi.getContent(chunk)));
 
         // Set Standby
         menuPanel.setStandby(false);

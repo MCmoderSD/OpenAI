@@ -268,7 +268,7 @@ public class OpenAi {
     }
 
     // Conversetion
-    public String converse(int id, int maxTokensPerConversation, int maxConversationCalls, String user, String instruction, String message, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
+    public String converse(int id, int maxConversationCalls, int maxTokenSpendingLimit, String user, String instruction, String message, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
 
         // Approve parameters
         if (disprove(user, instruction, message, temperature, maxTokens, topP, frequencyPenalty, presencePenalty))
@@ -283,7 +283,7 @@ public class OpenAi {
             return startConversation(id, user, instruction, message, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
 
         // Check Limit
-        boolean tokenSpendingLimit = calculateTotalTokens(conversation) + calculateTokens(message) + maxTokens >= maxTokensPerConversation;
+        boolean tokenSpendingLimit = calculateTotalTokens(conversation) + calculateTokens(message) + maxTokens >= maxTokenSpendingLimit;
         boolean conversationLimit = filterMessages(conversation, false).size() >= maxConversationCalls;
 
         // Continue conversation
@@ -292,11 +292,12 @@ public class OpenAi {
         else conversations.remove(id);
 
         // Return message
-        if (conversationLimit) return "The conversation has reached the call limit of " + maxConversationCalls;
-        else return "The conversation has reached the token limit of " + maxTokensPerConversation;
+        if (conversationLimit)
+            return "The conversation has reached the call limit of " + maxConversationCalls + " calls";
+        else return "The conversation has reached the token limit of " + maxTokenSpendingLimit + " tokens";
     }
 
-    public Flowable<ChatCompletionChunk> converseStream(int id, int maxTokensPerConversation, int maxConversationCalls, String user, String instruction, String message, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
+    public Flowable<ChatCompletionChunk> converseStream(int id, int maxConversationCalls, int maxTokenSpendingLimit, String user, String instruction, String message, double temperature, int maxTokens, double topP, double frequencyPenalty, double presencePenalty) {
 
         // Approve parameters
         if (disprove(user, instruction, message, temperature, maxTokens, topP, frequencyPenalty, presencePenalty))
@@ -311,7 +312,7 @@ public class OpenAi {
             return startConversationStream(id, user, instruction, message, temperature, maxTokens, topP, frequencyPenalty, presencePenalty).autoConnect();
 
         // Check Limit
-        boolean tokenSpendingLimit = calculateTotalTokens(conversation) + calculateTokens(message) + maxTokens >= maxTokensPerConversation;
+        boolean tokenSpendingLimit = calculateTotalTokens(conversation) + calculateTokens(message) + maxTokens >= maxTokenSpendingLimit;
         boolean conversationLimit = filterMessages(conversation, false).size() >= maxConversationCalls;
 
         // Continue conversation
