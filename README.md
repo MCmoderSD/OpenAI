@@ -10,7 +10,7 @@ This Utility is used to interact with the OpenAI API Services. <br>
 It is beeing developed to be used in my [YEPPBot - Twitch Chatbot](https://github.com/MCmoderSD/YEPPBot/). <br>
 But should work in any other Java Project as well. <br>
 
-Currently, it supports simple prompts and chat conversations. <br>
+Currently, it supports simple prompts, chat conversations and also TTS. <br>
 But I am planning to add more features in the future. <br>
 
 ## Usage
