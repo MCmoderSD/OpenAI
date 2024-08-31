@@ -5,10 +5,12 @@ import de.MCmoderSD.UI.ChatPanel;
 import de.MCmoderSD.UI.Frame;
 import de.MCmoderSD.UI.MenuPanel;
 import de.MCmoderSD.utilities.json.JsonUtility;
+import de.MCmoderSD.utilities.other.AudioFile;
 import de.MCmoderSD.utilities.other.OpenAi;
-import de.MCmoderSD.utilities.other.WavPlayer;
-import okhttp3.ResponseBody;
 
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
+import java.io.IOException;
 import java.util.Scanner;
 
 import static de.MCmoderSD.utilities.other.Calculate.*;
@@ -18,7 +20,6 @@ public class ChatGPT {
 
     // Associations
     private final OpenAi openAI;
-    private final WavPlayer wavPlayer;
 
     // Configuration
     private final String botName;
@@ -41,7 +42,6 @@ public class ChatGPT {
         JsonUtility jsonUtility = new JsonUtility();
         JsonNode config = jsonUtility.load("/ChatGPT.json");
         openAI = new OpenAi(config);
-        wavPlayer = new WavPlayer();
 
         // Constants
         botName = "YEPPBot";
@@ -193,8 +193,15 @@ public class ChatGPT {
             System.out.println("Cost: " + openAI.calculateTtsCost(input));
 
             // Get TTS
-            ResponseBody responseBody = openAI.tts(input, voice, speed, format);
-            wavPlayer.play(input, responseBody);
+            AudioFile audioFile = null;
+            try {
+                audioFile = openAI.tts(input, voice, format, speed);
+            } catch (UnsupportedAudioFileException | LineUnavailableException | IOException e) {
+                System.err.println("Error getting TTS: " + e.getMessage());
+            }
+            assert audioFile != null;
+
+            audioFile.play();
         }
     }
 }

@@ -14,6 +14,9 @@ import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
 import okhttp3.ResponseBody;
 
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -223,7 +226,7 @@ public class OpenAi {
         return response.getContent();
     }
 
-    private ResponseBody createSpeech(String input, String voice, double speed, String format) {
+    private ResponseBody createSpeech(String input, String voice, String format, double speed) {
 
         // Request
         CreateSpeechRequest request = CreateSpeechRequest
@@ -266,7 +269,7 @@ public class OpenAi {
         return false;
     }
 
-    public boolean disprove(String input, String voice, double speed, String format) {
+    public boolean disprove(String input, String voice, String format, double speed) {
 
         // Check Input
         if (input == null) throw new IllegalArgumentException("Input is null");
@@ -425,14 +428,18 @@ public class OpenAi {
     }
 
     // TTS
-    public ResponseBody tts(String input, String voice, double speed, String format) {
+    public AudioFile tts(String input, String voice, String format, double speed) throws UnsupportedAudioFileException, LineUnavailableException, IOException {
 
         // Approve parameters
-        if (disprove(input, voice, speed, format))
+        if (disprove(input, voice, format, speed))
             throw new IllegalArgumentException("Invalid parameters");
 
         // Get response
-        return createSpeech(input, voice, speed, format);
+        ResponseBody response = createSpeech(input, voice, format, speed);
+        if (response == null) throw new IllegalArgumentException("Invalid response");
+
+        // Return audio
+        return new AudioFile(response);
     }
 
     // Clear conversation
