@@ -8,9 +8,6 @@ import de.MCmoderSD.utilities.json.JsonUtility;
 import de.MCmoderSD.utilities.other.AudioFile;
 import de.MCmoderSD.utilities.other.OpenAi;
 
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
-import java.io.IOException;
 import java.util.Scanner;
 
 import static de.MCmoderSD.utilities.other.Calculate.*;
@@ -79,7 +76,6 @@ public class ChatGPT {
         System.out.println(UNBOLD);
 
         Scanner scanner = new Scanner(System.in);
-        ttsLoop(scanner);
     }
 
     private void promptLoop(Scanner scanner) {
@@ -126,6 +122,8 @@ public class ChatGPT {
             // Get response
             System.out.printf("%sBot: %s%s", BOLD, UNBOLD, BREAK);
             String response = openAI.converse(id, maxConversationCalls, maxTokenSpendingLimit, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+            AudioFile audioFile = openAI.tts(response, voice, format, speed);
+            audioFile.play();
 
             // Print response
             System.out.println(formatOpenAiResponse(response, "YEPP"));
@@ -193,14 +191,7 @@ public class ChatGPT {
             System.out.println("Cost: " + openAI.calculateTtsCost(input));
 
             // Get TTS
-            AudioFile audioFile = null;
-            try {
-                audioFile = openAI.tts(input, voice, format, speed);
-            } catch (UnsupportedAudioFileException | LineUnavailableException | IOException e) {
-                System.err.println("Error getting TTS: " + e.getMessage());
-            }
-            assert audioFile != null;
-
+            AudioFile audioFile = openAI.tts(input, voice, format, speed);
             audioFile.play();
         }
     }

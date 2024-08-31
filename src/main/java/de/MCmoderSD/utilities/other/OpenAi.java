@@ -428,7 +428,7 @@ public class OpenAi {
     }
 
     // TTS
-    public AudioFile tts(String input, String voice, String format, double speed) throws UnsupportedAudioFileException, LineUnavailableException, IOException {
+    public AudioFile tts(String input, String voice, String format, double speed) {
 
         // Approve parameters
         if (disprove(input, voice, format, speed))
