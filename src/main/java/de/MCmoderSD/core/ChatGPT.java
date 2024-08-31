@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import de.MCmoderSD.UI.ChatPanel;
 import de.MCmoderSD.UI.Frame;
 import de.MCmoderSD.UI.MenuPanel;
+
 import de.MCmoderSD.utilities.json.JsonUtility;
+import de.MCmoderSD.utilities.other.AudioBroadcast;
 import de.MCmoderSD.utilities.other.AudioFile;
 import de.MCmoderSD.utilities.other.OpenAi;
 
@@ -17,6 +19,7 @@ public class ChatGPT {
 
     // Associations
     private final OpenAi openAI;
+    private final AudioBroadcast audioBroadcast;
 
     // Configuration
     private final String botName;
@@ -34,6 +37,11 @@ public class ChatGPT {
 
 
     public ChatGPT() {
+
+        // Init Associations
+        audioBroadcast = new AudioBroadcast("localhost", 8000);
+        audioBroadcast.registerBrodcast("mcmodersd");
+
 
         // Load Configuration
         JsonUtility jsonUtility = new JsonUtility();
@@ -76,6 +84,7 @@ public class ChatGPT {
         System.out.println(UNBOLD);
 
         Scanner scanner = new Scanner(System.in);
+        ttsLoop(scanner);
     }
 
     private void promptLoop(Scanner scanner) {
@@ -192,7 +201,7 @@ public class ChatGPT {
 
             // Get TTS
             AudioFile audioFile = openAI.tts(input, voice, format, speed);
-            audioFile.play();
+            audioBroadcast.play("mcmodersd", audioFile);
         }
     }
 }
