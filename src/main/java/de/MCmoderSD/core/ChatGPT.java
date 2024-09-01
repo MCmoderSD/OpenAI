@@ -5,9 +5,9 @@ import de.MCmoderSD.UI.ChatPanel;
 import de.MCmoderSD.UI.Frame;
 import de.MCmoderSD.UI.MenuPanel;
 
+import de.MCmoderSD.objects.AudioFile;
 import de.MCmoderSD.utilities.json.JsonUtility;
 import de.MCmoderSD.utilities.other.AudioBroadcast;
-import de.MCmoderSD.utilities.other.AudioFile;
 import de.MCmoderSD.utilities.other.OpenAi;
 
 import java.util.Scanner;

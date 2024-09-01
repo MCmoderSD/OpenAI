@@ -10,6 +10,7 @@ import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.completion.chat.ChatMessageRole;
 import com.theokanning.openai.service.OpenAiService;
 
+import de.MCmoderSD.objects.AudioFile;
 import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
 import okhttp3.ResponseBody;
