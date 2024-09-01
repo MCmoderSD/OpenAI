@@ -1,31 +1,42 @@
 package de.MCmoderSD.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import de.MCmoderSD.OpenAI.modules.Chat;
+import de.MCmoderSD.OpenAI.modules.Image;
+import de.MCmoderSD.OpenAI.modules.Speech;
 import de.MCmoderSD.UI.ChatPanel;
 import de.MCmoderSD.UI.Frame;
 import de.MCmoderSD.UI.MenuPanel;
 
 import de.MCmoderSD.objects.AudioFile;
 import de.MCmoderSD.utilities.json.JsonUtility;
-import de.MCmoderSD.utilities.other.AudioBroadcast;
-import de.MCmoderSD.utilities.other.OpenAi;
+import de.MCmoderSD.utilities.HTTP.AudioBroadcast;
+import de.MCmoderSD.OpenAI.OpenAI;
 
+import java.util.HashSet;
 import java.util.Scanner;
 
 import static de.MCmoderSD.utilities.other.Calculate.*;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "FieldCanBeLocal"})
 public class ChatGPT {
 
     // Associations
-    private final OpenAi openAI;
+    private final OpenAI openAI;
+    private final Chat chat;
+    private final Image image;
+    private final Speech speech;
     private final AudioBroadcast audioBroadcast;
 
     // Configuration
     private final String botName;
-    private final String voice;
-    private final double speed;
-    private final String format;
+    private final JsonNode config;
+    private final JsonNode chatConfig;
+    private final JsonNode imageConfig;
+    private final JsonNode speechConfig;
+
+    // Chat
+    private final String chatModel;
     private final int maxConversationCalls;
     private final int maxTokenSpendingLimit;
     private final double temperature;
@@ -35,6 +46,18 @@ public class ChatGPT {
     private final double presencePenalty;
     private final String instruction;
 
+    // Image
+    private final String imageModel;
+    private final String quality;
+    private final String resolution;
+    private final String style;
+
+    // Speech
+    private final String ttsModel;
+    private final String voice;
+    private final double speed;
+    private final String format;
+
 
     public ChatGPT() {
 
@@ -42,49 +65,53 @@ public class ChatGPT {
         audioBroadcast = new AudioBroadcast("localhost", 8000);
         audioBroadcast.registerBrodcast("mcmodersd");
 
-
         // Load Configuration
         JsonUtility jsonUtility = new JsonUtility();
-        JsonNode config = jsonUtility.load("/ChatGPT.json");
-        openAI = new OpenAi(config);
-
-        // Constants
         botName = "YEPPBot";
-        String chatModel = config.get("chatModel").asText();
-        String ttsModel = config.get("ttsModel").asText();
-        voice = config.get("voice").asText();
-        speed = config.get("speed").asDouble();
-        format = config.get("format").asText();
-        maxConversationCalls = config.get("maxConversationCalls").asInt();
-        maxTokenSpendingLimit = config.get("maxTokenSpendingLimit").asInt();
-        temperature = config.get("temperature").asDouble();
-        maxTokens = config.get("maxTokens").asInt();
-        topP = config.get("topP").asDouble();
-        frequencyPenalty = config.get("frequencyPenalty").asDouble();
-        presencePenalty = config.get("presencePenalty").asDouble();
-        instruction = config.get("instruction").asText();
+        config = jsonUtility.load("/ChatGPT.json");
+        chatConfig = config.get("chat");
+        imageConfig = config.get("image");
+        speechConfig = config.get("speech");
+        openAI = new OpenAI(config);
+
+        // Set Associations
+        chat = openAI.getChat();
+        image = openAI.getImage();
+        speech = openAI.getSpeech( );
+
+        // Chat Configuration
+        chatModel = chatConfig.get("chatModel").asText();
+        maxConversationCalls = chatConfig.get("maxConversationCalls").asInt();
+        maxTokenSpendingLimit = chatConfig.get("maxTokenSpendingLimit").asInt();
+        temperature = chatConfig.get("temperature").asDouble();
+        maxTokens = chatConfig.get("maxTokens").asInt();
+        topP = chatConfig.get("topP").asDouble();
+        frequencyPenalty = chatConfig.get("frequencyPenalty").asDouble();
+        presencePenalty = chatConfig.get("presencePenalty").asDouble();
+        instruction = chatConfig.get("instruction").asText();
+
+        // Image Configuration
+        imageModel = imageConfig.get("imageModel").asText();
+        quality = imageConfig.get("quality").asText();
+        resolution = imageConfig.get("resolution").asText();
+        style = imageConfig.get("style").asText();
+
+        // Speech Configuration
+        ttsModel = speechConfig.get("ttsModel").asText();
+        voice = speechConfig.get("voice").asText();
+        speed = speechConfig.get("speed").asDouble();
+        format = speechConfig.get("format").asText();
 
         // Print Welcome Message
         System.out.println(BOLD);
         System.out.println("Welcome to ChatGPT!\n");
         System.out.println("Bot Name: " + botName);
         System.out.println("Chat Model: " + chatModel);
+        System.out.println("Image Model: " + imageModel);
         System.out.println("TTS Model: " + ttsModel);
-        System.out.println("Voice: " + voice);
-        System.out.println("Speed: " + speed);
-        System.out.println("Format: " + format);
-        System.out.println("Max Conversation Calls: " + maxConversationCalls);
-        System.out.println("Max Token Spending Limit: " + maxTokenSpendingLimit);
-        System.out.println("Temperature: " + temperature);
-        System.out.println("Max Tokens: " + maxTokens);
-        System.out.println("Top P: " + topP);
-        System.out.println("Frequency Penalty: " + frequencyPenalty);
-        System.out.println("Presence Penalty: " + presencePenalty);
-        System.out.println("Instruction: " + instruction);
         System.out.println(UNBOLD);
 
         Scanner scanner = new Scanner(System.in);
-        ttsLoop(scanner);
     }
 
     private void promptLoop(Scanner scanner) {
@@ -96,19 +123,19 @@ public class ChatGPT {
             // Get user input
             String input = scanner.nextLine();
             System.out.printf("%sChars: %s%s", BOLD, input.length(), BREAK);
-            System.out.printf("Tokens: %s%s", OpenAi.calculateTokens(input), BREAK);
-            System.out.printf("Cost: %s%s%s%s", openAI.calculatePromptCost(input), UNBOLD, BREAK, BREAK);
+            System.out.printf("Tokens: %s%s", Chat.calculateTokens(input), BREAK);
+            System.out.printf("Cost: %s%s%s%s", chat.calculatePromptCost(input), UNBOLD, BREAK, BREAK);
 
             // Get response
             System.out.printf("%sBot: %s%s", BOLD, UNBOLD, BREAK);
-            String response = openAI.prompt(botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+            String response = chat.prompt(botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
 
             // Print response
             System.out.println(formatOpenAiResponse(response, "YEPP"));
             System.out.printf("%sChars: %s%s", BOLD, response.length(), BREAK);
-            System.out.printf("Tokens: %s%s", OpenAi.calculateTokens(response), BREAK);
-            System.out.printf("Cost: %s%s", openAI.calculatePromptCost(response), BREAK);
-            System.out.printf("Total Cost: %s%s%s%s", openAI.calculatePromptCost(input, response), UNBOLD, BREAK, BREAK);
+            System.out.printf("Tokens: %s%s", Chat.calculateTokens(response), BREAK);
+            System.out.printf("Cost: %s%s", chat.calculatePromptCost(response), BREAK);
+            System.out.printf("Total Cost: %s%s%s%s", chat.calculatePromptCost(input, response), UNBOLD, BREAK, BREAK);
         }
     }
 
@@ -124,22 +151,22 @@ public class ChatGPT {
             // Get user input
             String input = scanner.nextLine();
             System.out.printf("%sChars: %s%s", BOLD, input.length(), BREAK);
-            System.out.printf("Tokens: %s%s", OpenAi.calculateTokens(input), BREAK);
-            System.out.printf("Cost: %s%s%s%s", openAI.calculatePromptCost(input), UNBOLD, BREAK, BREAK);
+            System.out.printf("Tokens: %s%s", Chat.calculateTokens(input), BREAK);
+            System.out.printf("Cost: %s%s%s%s", chat.calculatePromptCost(input), UNBOLD, BREAK, BREAK);
 
 
             // Get response
             System.out.printf("%sBot: %s%s", BOLD, UNBOLD, BREAK);
-            String response = openAI.converse(id, maxConversationCalls, maxTokenSpendingLimit, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
-            AudioFile audioFile = openAI.tts(response, voice, format, speed);
+            String response = chat.converse(id, maxConversationCalls, maxTokenSpendingLimit, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty);
+            AudioFile audioFile = speech.tts(response, voice, format, speed);
             audioFile.play();
 
             // Print response
             System.out.println(formatOpenAiResponse(response, "YEPP"));
             System.out.printf("%sChars: %s%s", BOLD, response.length(), BREAK);
-            System.out.printf("Tokens: %s%s", OpenAi.calculateTokens(response), BREAK);
-            System.out.printf("Tokens Used: %s%s", openAI.getConversationTokens(id), BREAK);
-            System.out.printf("Cost: %s%s", openAI.calculateConverationCost(id), BREAK);
+            System.out.printf("Tokens: %s%s", Chat.calculateTokens(response), BREAK);
+            System.out.printf("Tokens Used: %s%s", chat.getConversationTokens(id), BREAK);
+            System.out.printf("Cost: %s%s", chat.calculateConverationCost(id), BREAK);
         }
     }
 
@@ -158,7 +185,7 @@ public class ChatGPT {
 
         // Print response
         chatPanel.append(BREAK + "ChatGPT: " + BREAK);
-        openAI.promptStream(botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty).forEach(chunk -> chatPanel.append(OpenAi.getContent(chunk)));
+        chat.promptStream(botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty).forEach(chunk -> chatPanel.append(Chat.getContent(chunk)));
 
         // Set Standby
         menuPanel.setStandby(false);
@@ -182,7 +209,7 @@ public class ChatGPT {
 
         // Print response
         chatPanel.append(BREAK + "ChatGPT: " + BREAK);
-        openAI.converseStream(id, maxConversationCalls, maxTokenSpendingLimit, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty).forEach(chunk -> chatPanel.append(OpenAi.getContent(chunk)));
+        chat.converseStream(id, maxConversationCalls, maxTokenSpendingLimit, botName, instruction, input, temperature, maxTokens, topP, frequencyPenalty, presencePenalty).forEach(chunk -> chatPanel.append(Chat.getContent(chunk)));
 
         // Set Standby
         menuPanel.setStandby(false);
@@ -197,11 +224,27 @@ public class ChatGPT {
             // Get user input
             String input = scanner.nextLine();
             System.out.printf("%sChars: %s%s", BOLD, input.length(), BREAK);
-            System.out.println("Cost: " + openAI.calculateTtsCost(input));
+            System.out.println("Cost: " + speech.calculatePrice(input));
 
             // Get TTS
-            AudioFile audioFile = openAI.tts(input, voice, format, speed);
+            AudioFile audioFile = speech.tts(input, voice, format, speed);
             audioBroadcast.play("mcmodersd", audioFile);
+        }
+    }
+
+    public void imageLoop(Scanner scanner) {
+        while (this.openAI.isActive()) {
+
+            // Format
+            System.out.printf("%sYou: %s%s", BOLD, UNBOLD, BREAK);
+
+            // Get user input
+            String input = scanner.nextLine();
+            System.out.printf("%sChars: %s%s", BOLD, input.length(), BREAK);
+
+            // Get Image
+            HashSet<String> result = image.generate(botName, input, 1, resolution);
+            result.forEach(System.out::println);
         }
     }
 }
