@@ -1,5 +1,6 @@
 package de.MCmoderSD.OpenAI.modules;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.theokanning.openai.image.CreateImageRequest;
 import com.theokanning.openai.image.ImageResult;
 import com.theokanning.openai.service.OpenAiService;
@@ -15,11 +16,15 @@ public class Image {
     private final ImageModel model;
     private final OpenAiService service;
 
+    // Attributes
+    private final JsonNode config;
+
     // Constructor
-    public Image(ImageModel model, OpenAiService service) {
+    public Image(ImageModel model, JsonNode config, OpenAiService service) {
 
         // Set Associations
         this.model = model;
+        this.config = config;
         this.service = service;
     }
 
@@ -134,6 +139,10 @@ public class Image {
     }
 
     // Getter
+    public JsonNode getConfig() {
+        return config;
+    }
+
     public ImageModel getModel() {
         return model;
     }

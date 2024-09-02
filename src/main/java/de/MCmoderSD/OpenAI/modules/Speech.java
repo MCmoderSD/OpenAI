@@ -1,5 +1,6 @@
 package de.MCmoderSD.OpenAI.modules;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.theokanning.openai.audio.CreateSpeechRequest;
 import com.theokanning.openai.service.OpenAiService;
 import de.MCmoderSD.OpenAI.enums.TTSModel;
@@ -15,11 +16,15 @@ public class Speech {
     private final TTSModel model;
     private final OpenAiService service;
 
+    // Attributes
+    private final JsonNode config;
+
     // Constructor
-    public Speech(TTSModel model, OpenAiService service) {
+    public Speech(TTSModel model, JsonNode config, OpenAiService service) {
 
         // Set Associations
         this.model = model;
+        this.config = config;
         this.service = service;
     }
 
@@ -78,6 +83,10 @@ public class Speech {
     }
 
     // Getter
+    public JsonNode getConfig() {
+        return config;
+    }
+
     public TTSModel getModel() {
         return model;
     }

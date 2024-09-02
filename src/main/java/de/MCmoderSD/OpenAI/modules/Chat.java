@@ -1,5 +1,6 @@
 package de.MCmoderSD.OpenAI.modules;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.theokanning.openai.completion.chat.ChatCompletionChunk;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionResult;
@@ -27,12 +28,16 @@ public class Chat {
     private final OpenAiService service;
 
     // Attributes
+    private final JsonNode config;
+
+    // Attributes
     private final HashMap<Integer, ArrayList<ChatMessage>> conversations;
 
-    public Chat(ChatModel model, OpenAiService service) {
+    public Chat(ChatModel model, JsonNode config, OpenAiService service) {
 
         // Set Associations
         this.model = model;
+        this.config = config;
         this.service = service;
 
         // Init Attributes
@@ -347,6 +352,18 @@ public class Chat {
     }
 
     // Getter
+    public JsonNode getConfig() {
+        return config;
+    }
+
+    public ChatModel getModel() {
+        return model;
+    }
+
+    public OpenAiService getService() {
+        return service;
+    }
+
     public boolean hasConversation(int id) {
         return conversations.containsKey(id);
     }

@@ -18,6 +18,11 @@ public class OpenAI {
     // Attributes
     private final OpenAiService service;
 
+    // Modules
+    private final boolean chatActive;
+    private final boolean imageActive;
+    private final boolean speechActive;
+
     // Associations
     private final Chat chat;
     private final Image image;
@@ -37,46 +42,91 @@ public class OpenAI {
         // Initialize OpenAI Service
         service = new OpenAiService(config.get("apiKey").asText());
 
-        // Set Chat Model
-        JsonNode chatConfig = config.get("chat");
-        String chatModelName = chatConfig.get("chatModel").asText();
-        if (chatModelName == null) throw new IllegalArgumentException("Chat model is null");
-        if (chatModelName.isEmpty() || chatModelName.isBlank()) throw new IllegalArgumentException("Chat model is empty");
-        chatModel = switch (chatModelName) {
-            case "gpt-4o" -> ChatModel.GPT_4O;
-            case "gpt-4o-2024-08-06" -> ChatModel.GPT_4O_2024_08_06;
-            case "gpt-4o-2024-05-13" -> ChatModel.GPT_4O_2024_05_13;
-            case "gpt-4o-mini" -> ChatModel.GPT_4O_MINI;
-            case "gpt-4o-mini-2024-07-18" -> ChatModel.GPT_4O_MINI_2024_07_18;
-            default -> throw new IllegalArgumentException("Invalid chat model");
-        };
+        // Check Modules
+        chatActive = config.has("chat");
+        imageActive = config.has("image");
+        speechActive = config.has("speech");
 
-        // Set Image Model
-        JsonNode imageConfig = config.get("image");
-        String imageModelName = imageConfig.get("imageModel").asText();
-        if (imageModelName == null) throw new IllegalArgumentException("Image model is null");
-        if (imageModelName.isEmpty() || imageModelName.isBlank()) throw new IllegalArgumentException("Image model is empty");
-        imageModel = switch (imageModelName) {
-            case "dall-e-2" -> ImageModel.DALL_E_2;
-            case "dall-e-3" -> ImageModel.DALL_E_3;
-            default -> throw new IllegalArgumentException("Invalid image model");
-        };
+        // Initialize Chat Module
+        if (chatActive) {
 
-        // Set TTS Model
-        JsonNode ttsConfig = config.get("speech");
-        String ttsModelName = ttsConfig.get("ttsModel").asText();
-        if (ttsModelName == null) throw new IllegalArgumentException("TTS model is null");
-        if (ttsModelName.isEmpty() || ttsModelName.isBlank()) throw new IllegalArgumentException("TTS model is empty");
-        ttsModel = switch (ttsModelName) {
-            case "tts-1" -> TTSModel.TTS;
-            case "tts-1-hd" -> TTSModel.TTS_HD;
-            default -> throw new IllegalArgumentException("Invalid TTS model");
-        };
+            // Get Chat Config
+            JsonNode chatConfig = config.get("chat");
+            String chatModelName = chatConfig.get("chatModel").asText();
 
-        // Initialize Associations
-        chat = new Chat(chatModel, service);
-        image = new Image(imageModel, service);
-        speech = new Speech(ttsModel, service);
+            // Check Chat Model
+            if (chatModelName == null) throw new IllegalArgumentException("Chat model is null");
+            if (chatModelName.isEmpty() || chatModelName.isBlank())
+                throw new IllegalArgumentException("Chat model is empty");
+
+            // Set Chat Model
+            chatModel = switch (chatModelName) {
+                case "gpt-4o" -> ChatModel.GPT_4O;
+                case "gpt-4o-2024-08-06" -> ChatModel.GPT_4O_2024_08_06;
+                case "gpt-4o-2024-05-13" -> ChatModel.GPT_4O_2024_05_13;
+                case "gpt-4o-mini" -> ChatModel.GPT_4O_MINI;
+                case "gpt-4o-mini-2024-07-18" -> ChatModel.GPT_4O_MINI_2024_07_18;
+                default -> throw new IllegalArgumentException("Invalid chat model");
+            };
+
+            // Initialize Chat
+            chat = new Chat(chatModel, chatConfig, service);
+        } else {
+            chatModel = null;
+            chat = null;
+        }
+
+        // Initialize Image Module
+        if (imageActive) {
+
+            // Get Image Config
+            JsonNode imageConfig = config.get("image");
+            String imageModelName = imageConfig.get("imageModel").asText();
+
+            // Check Image Model
+            if (imageModelName == null) throw new IllegalArgumentException("Image model is null");
+            if (imageModelName.isEmpty() || imageModelName.isBlank())
+                throw new IllegalArgumentException("Image model is empty");
+
+            // Set Image Model
+            imageModel = switch (imageModelName) {
+                case "dall-e-2" -> ImageModel.DALL_E_2;
+                case "dall-e-3" -> ImageModel.DALL_E_3;
+                default -> throw new IllegalArgumentException("Invalid image model");
+            };
+
+            // Initialize Image
+            image = new Image(imageModel, imageConfig, service);
+        } else {
+            imageModel = null;
+            image = null;
+        }
+
+        // Initialize Speech Module
+        if (speechActive) {
+
+            // Get TTS Config
+            JsonNode ttsConfig = config.get("speech");
+            String ttsModelName = ttsConfig.get("ttsModel").asText();
+
+            // Check TTS Model
+            if (ttsModelName == null) throw new IllegalArgumentException("TTS model is null");
+            if (ttsModelName.isEmpty() || ttsModelName.isBlank())
+                throw new IllegalArgumentException("TTS model is empty");
+
+            // Set TTS Model
+            ttsModel = switch (ttsModelName) {
+                case "tts-1" -> TTSModel.TTS;
+                case "tts-1-hd" -> TTSModel.TTS_HD;
+                default -> throw new IllegalArgumentException("Invalid TTS model");
+            };
+
+            // Initialize Speech
+            speech = new Speech(ttsModel, ttsConfig, service);
+        } else {
+            ttsModel = null;
+            speech = null;
+        }
     }
 
     // Getter
@@ -102,6 +152,18 @@ public class OpenAI {
 
     public Speech getSpeech() {
         return speech;
+    }
+
+    public boolean isChatActive() {
+        return chatActive;
+    }
+
+    public boolean isImageActive() {
+        return imageActive;
+    }
+
+    public boolean isSpeechActive() {
+        return speechActive;
     }
 
     // Enums
