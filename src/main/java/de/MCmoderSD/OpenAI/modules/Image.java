@@ -43,7 +43,6 @@ public class Image {
                 .style(style)               // Style
                 .build();                   // Build
 
-
         // Result
         return service.createImage(request);
     }
@@ -59,7 +58,6 @@ public class Image {
                 .n(amount)                  // Amount
                 .size(resolution)           // Resolution
                 .build();                   // Build
-
 
         // Result
         return service.createImage(request);

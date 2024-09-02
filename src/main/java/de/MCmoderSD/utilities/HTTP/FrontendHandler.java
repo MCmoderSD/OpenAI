@@ -30,29 +30,29 @@ public class FrontendHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         String html = String.format("""
-                <html>
-                    <body style='margin:0; padding:0; overflow:hidden;'>
-                       <audio id="audi" autoplay="true" src="http://%s:%d/audio/%s" type="audio/wav">
-                        <script>
-                            function checkForUpdate() {
-                                fetch('/version/%s')
-                                    .then(response => response.text())
-                                    .then(version => {
-                                        if (localStorage.getItem('audioVersion') !== version) {
-                                            localStorage.setItem('audioVersion', version);
-                                            window.location.reload();
-                                        }
-                                    });
-                            }
-                            function updateLoop() {
-                                setInterval(checkForUpdate, 1000);
-                            }
-                
-                            window.onload = updateLoop;
-                        </script>
-                    </body>
-                </html>
-                """, hostname, port, broadcastId, broadcastId);
+                    <html>
+                        <body style='margin:0; padding:0; overflow:hidden;'>
+                           <audio id="audi" autoplay="true" src="http://%s:%d/audio/%s" type="audio/wav">
+                            <script>
+                                function checkForUpdate() {
+                                    fetch('/version/%s')
+                                        .then(response => response.text())
+                                        .then(version => {
+                                            if (localStorage.getItem('audioVersion') !== version) {
+                                                localStorage.setItem('audioVersion', version);
+                                                window.location.reload();
+                                            }
+                                        });
+                                }
+                                function updateLoop() {
+                                    setInterval(checkForUpdate, 1000);
+                                }
+                    
+                                window.onload = updateLoop;
+                            </script>
+                        </body>
+                    </html>
+                    """, hostname, port, broadcastId, broadcastId);
 
         exchange.getResponseHeaders().set("Content-Type", "text/html");
         exchange.sendResponseHeaders(200, html.length());

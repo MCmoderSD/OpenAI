@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static de.MCmoderSD.utilities.other.Calculate.*;
+import static de.MCmoderSD.utilities.other.Calculate.BREAK;
 
 @SuppressWarnings({"HttpUrlsUsage", "unused", "UnusedReturnValue"})
 public class AudioBroadcast {
@@ -88,27 +88,6 @@ public class AudioBroadcast {
         return true;
     }
 
-    // Getter
-    public String getHostname() {
-        return hostname;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public HttpServer getServer() {
-        return server;
-    }
-
-    public HashMap<String, byte[]> getAudioFiles() {
-        return audioFiles;
-    }
-
-    public HashMap<String, AtomicLong> getVersions() {
-        return versions;
-    }
-
     // Audio Handler
     private class AudioHandler implements HttpHandler {
 
@@ -155,5 +134,27 @@ public class AudioBroadcast {
             os.write(currentVersion.getBytes());
             os.close();
         }
+    }
+
+    // Getter
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public HttpServer getServer() {
+        return server;
+    }
+
+    public HashMap<String, byte[]> getAudioFiles() {
+        return audioFiles;
+    }
+
+    public HashMap<String, AtomicLong> getVersions() {
+        return versions;
     }
 }

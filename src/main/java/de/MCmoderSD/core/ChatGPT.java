@@ -63,7 +63,7 @@ public class ChatGPT {
 
         // Init Associations
         audioBroadcast = new AudioBroadcast("localhost", 8000);
-        audioBroadcast.registerBrodcast("mcmodersd");
+        audioBroadcast.registerBrodcast("");
 
         // Load Configuration
         JsonUtility jsonUtility = new JsonUtility();
@@ -112,6 +112,7 @@ public class ChatGPT {
         System.out.println(UNBOLD);
 
         Scanner scanner = new Scanner(System.in);
+        ttsLoop(scanner);
     }
 
     private void promptLoop(Scanner scanner) {
