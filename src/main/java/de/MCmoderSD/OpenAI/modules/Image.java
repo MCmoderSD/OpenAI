@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.theokanning.openai.image.CreateImageRequest;
 import com.theokanning.openai.image.ImageResult;
 import com.theokanning.openai.service.OpenAiService;
+
 import de.MCmoderSD.OpenAI.enums.ImageModel;
 
 import java.math.BigDecimal;

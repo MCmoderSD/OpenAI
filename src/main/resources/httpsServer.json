@@ -1,0 +1,7 @@
+{
+  "hostname": "localhost",
+  "port": 443,
+  "keystore": "/keys/keystore.jks",
+  "privkey": "/etc/letsencrypt/live/mcmodersd.de/privkey.pem",
+  "fullchain": "/etc/letsencrypt/live/mcmodersd.de/fullchain.pem"
+}
