@@ -42,7 +42,7 @@ The config.json file should look like this:
 
   "image": {
     "imageModel": "dall-e-2",
-    "quality": "standart",
+    "quality": "standard",
     "resolution": "1024x1024",
     "style": "vivid"
   },
@@ -52,6 +52,13 @@ The config.json file should look like this:
     "voice": "alloy",
     "speed": 1,
     "format": "wav"
+  },
+
+  "transcription": {
+    "transcriptionModel": "whisper-1",
+    "prompt": "Transcribe the following audio file to German.",
+    "language": "German",
+    "temperature": 1
   }
 }
 ```
@@ -111,7 +118,7 @@ You can get the API key from [OpenAI](https://platform.openai.com/signup). <br>
   The min value is 0 and the max value is 1. <br>
 
 
-- The **instruction** is the way the bot should behave and how he should reply to the prompt.
+- The **instruction** is the way the bot should behave and how he should reply to the prompt. <br>
 
 
 ### Image Configuration
@@ -122,12 +129,12 @@ You can get the API key from [OpenAI](https://platform.openai.com/signup). <br>
 | **Model** | **Quality** | **Resolution**                     | **Pricing**                                             |
 |:----------|:-----------:|:-----------------------------------|:--------------------------------------------------------|
 | dall-e-2  |             | 256x256<br/>512x512<br/>1024x1024  | \$0.016 / Image<br/>\$0.018 / Image<br/> $0.020 / Image |
-| dall-e-3  |  standart   | 1024x1024<br/>1024x1792, 1792×1024 | \$0.040 / Image<br/>\$0.080 / Image                     |
+| dall-e-3  |  standard   | 1024x1024<br/>1024x1792, 1792×1024 | \$0.040 / Image<br/>\$0.080 / Image                     |
 | dall-e-3  |     hd      | 1024x1024<br/>1024x1792, 1792×1024 | \$0.080 / Image<br/>\$0.120 / Image                     |
 
 
 - The **quality** is the quality of the image. <br>
-  The available qualities are standart and hd. <br>
+  The available qualities are standard and hd. <br>
   The quality is only available for dall-e-3. <br>
 
   
@@ -143,7 +150,7 @@ You can get the API key from [OpenAI](https://platform.openai.com/signup). <br>
   The style is only available for dall-e-3. <br>
   The default style is vivid. <br>
 
-
+  
 ### Speech Configuration
 
 - The **ttsModel** is the model that the bot will use to generate the speech. <br>
@@ -163,4 +170,27 @@ You can get the API key from [OpenAI](https://platform.openai.com/signup). <br>
 
 
 - The **speed** is the speed of the speech. <br>
-  The min value is 0.25 and the max value is 4, the default value is 1. <br>
+  The min value is 0.25 and the max value is 4, the default value is 1. <br> <br>
+
+
+### Transcription Configuration
+
+- The **transcriptionModel** is the model that the bot will use to generate the transcription. <br>
+  The available models are: <br>
+
+| **Model** | **Pricing**                                     |
+|:---------:|:------------------------------------------------|
+| whisper-1 | $0.006 / minute (rounded to the nearest second) |
+
+
+- The **prompt** is the prompt that the model will use to generate the transcription. <br>
+
+
+- The **language** is the language of the audio. <br>
+
+
+- The **temperature** is the randomness of the transcription. <br>
+  Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic
+  and repetitive. <br>
+  Higher temperature results in more random completions. <br>
+  The min value is 0 and the max value is 2. <br> <br>

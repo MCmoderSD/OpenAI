@@ -10,7 +10,7 @@ import de.MCmoderSD.OpenAI.enums.ImageModel;
 import java.math.BigDecimal;
 import java.util.HashSet;
 
-@SuppressWarnings({"unused", "UnusedReturnValue", "ClassCanBeRecord"})
+@SuppressWarnings({"unused", "UnusedReturnValue"})
 public class Image {
 
     // Associations

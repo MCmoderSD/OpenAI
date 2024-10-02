@@ -5,6 +5,10 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.Point;
 import java.awt.Color;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.HexFormat;
 
 public class Calculate {
 
@@ -40,5 +44,17 @@ public class Calculate {
     // Format OpenAI Response
     public static String formatOpenAiResponse(String response, String emote) {
         return removeRepetitions(replaceEmojis(response.replaceAll("(?i)" + emote + "[.,!?\\s]*", emote + " "), emote), emote);
+    }
+
+    // Calculate Tokens
+    public static String getSHA256(byte[] data) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(data);
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("SHA-256 algorithm not found");
+            return null;
+        }
     }
 }

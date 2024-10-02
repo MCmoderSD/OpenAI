@@ -11,7 +11,7 @@ import okhttp3.ResponseBody;
 
 import java.math.BigDecimal;
 
-@SuppressWarnings({"unused", "ClassCanBeRecord"})
+@SuppressWarnings({"unused"})
 public class Speech {
 
     // Associations

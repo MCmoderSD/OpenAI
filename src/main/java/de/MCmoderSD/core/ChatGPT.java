@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import de.MCmoderSD.OpenAI.modules.Chat;
 import de.MCmoderSD.OpenAI.modules.Image;
 import de.MCmoderSD.OpenAI.modules.Speech;
+import de.MCmoderSD.OpenAI.modules.Transcription;
 import de.MCmoderSD.UI.ChatPanel;
 import de.MCmoderSD.UI.Frame;
 import de.MCmoderSD.UI.MenuPanel;
@@ -11,8 +12,6 @@ import de.MCmoderSD.UI.MenuPanel;
 import de.MCmoderSD.objects.AudioFile;
 import de.MCmoderSD.utilities.json.JsonUtility;
 import de.MCmoderSD.OpenAI.OpenAI;
-import de.MCmoderSD.utilities.server.AudioBroadcast;
-import de.MCmoderSD.utilities.server.Server;
 
 import java.util.HashSet;
 import java.util.Scanner;
@@ -26,14 +25,15 @@ public class ChatGPT {
     private final OpenAI openAI;
     private final Chat chat;
     private final Image image;
+    private final Transcription transcription;
     private final Speech speech;
-    private final AudioBroadcast audioBroadcast;
 
     // Configuration
     private final String botName;
     private final JsonNode config;
     private final JsonNode chatConfig;
     private final JsonNode imageConfig;
+    private final JsonNode transcriptionConfig;
     private final JsonNode speechConfig;
 
     // Chat
@@ -54,6 +54,12 @@ public class ChatGPT {
     private final String style;
 
     // Speech
+    private final String transcriptionModel;
+    private final String prompt;
+    private final String language;
+    private final double transcriptionTemperature;
+
+    // Speech
     private final String ttsModel;
     private final String voice;
     private final double speed;
@@ -62,23 +68,23 @@ public class ChatGPT {
 
     public ChatGPT() {
 
-        // Init Associations
-        Server server = new Server(httpsServer);
-        audioBroadcast = new AudioBroadcast(server);
-        audioBroadcast.registerBroadcast("mcmodersd");
-
         // Load Configuration
         JsonUtility jsonUtility = new JsonUtility();
         botName = "YEPPBot";
         config = jsonUtility.load("/ChatGPT.json");
         chatConfig = config.get("chat");
         imageConfig = config.get("image");
+        transcriptionConfig = config.get("transcription");
         speechConfig = config.get("speech");
         openAI = new OpenAI(config);
+
+
+        // Init Associations
 
         // Set Associations
         chat = openAI.getChat();
         image = openAI.getImage();
+        transcription = openAI.getTranscription();
         speech = openAI.getSpeech( );
 
         // Chat Configuration
@@ -98,6 +104,12 @@ public class ChatGPT {
         resolution = imageConfig.get("resolution").asText();
         style = imageConfig.get("style").asText();
 
+        // Transcription Configuration
+        transcriptionModel = transcriptionConfig.get("transcriptionModel").asText();
+        prompt = transcriptionConfig.get("prompt").asText();
+        language = transcriptionConfig.get("language").asText();
+        transcriptionTemperature = transcriptionConfig.get("temperature").asDouble();
+
         // Speech Configuration
         ttsModel = speechConfig.get("ttsModel").asText();
         voice = speechConfig.get("voice").asText();
@@ -110,6 +122,7 @@ public class ChatGPT {
         System.out.println("Bot Name: " + botName);
         System.out.println("Chat Model: " + chatModel);
         System.out.println("Image Model: " + imageModel);
+        System.out.println("Transcription Model: " + transcriptionModel);
         System.out.println("TTS Model: " + ttsModel);
         System.out.println(UNBOLD);
 
@@ -231,7 +244,10 @@ public class ChatGPT {
 
             // Get TTS
             AudioFile audioFile = speech.tts(input, voice, format, speed);
-            audioBroadcast.play("mcmodersd", audioFile.getAudioData());
+
+            String response = transcription.transcribe(audioFile, prompt, language, transcriptionTemperature);
+            System.out.println("Transcription: " + response);
+
             audioFile.play();
         }
     }
